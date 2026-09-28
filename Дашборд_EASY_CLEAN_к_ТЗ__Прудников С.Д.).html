@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyClean — Ultimate Командный центр закупок</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #020617; /* Slate 950 */
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(12px);
+            border-radius: 1rem;
+            transition: all 0.3s ease;
+        }
+        .glass-panel:hover {
+            border-color: rgba(56, 189, 248, 0.4);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        .tab-btn {
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: #38bdf8;
+            color: #0f172a;
+            font-weight: 600;
+        }
+        .number-font {
+            font-variant-numeric: tabular-nums;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        /* Скрытие вкладок и режимов */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease-in-out; }
+        .hidden { display: none !important; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="text-slate-200 min-h-screen pb-10">
+
+<div class="max-w-[1600px] mx-auto p-4 md:p-6">
+
+    <!-- HEADER & NAVIGATION -->
+    <header class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
+        <div>
+            <div class="text-xs font-bold text-sky-500 tracking-wider mb-1">EASY CLEAN // КАБИНЕТ ЗАКУПОК</div>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-white">Командный центр закупок</h1>
+            <p class="text-slate-400 mt-2">Интерактивное управление запасами, дефицитами и поставщиками</p>
+        </div>
+        
+        <div class="flex flex-col items-end gap-4">
+            <div class="glass-panel px-5 py-2 flex gap-4 text-sm">
+                <div>
+                    <span class="text-slate-500 text-xs block">ДАТА РАСЧЕТА</span>
+                    <span class="font-semibold text-white">24.08.2026</span>
+                </div>
+                <div class="border-l border-slate-700 pl-4">
+                    <span class="text-slate-500 text-xs block">СТАТУС</span>
+                    <span class="font-semibold text-emerald-400 flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> ONLINE
+                    </span>
+                </div>
+            </div>
+            
+            <!-- TABS -->
+            <div class="flex bg-slate-900 rounded-lg p-1 border border-slate-800">
+                <button onclick="switchTab('tab-overview')" id="btn-overview" class="tab-btn active px-4 py-2 rounded-md text-sm">Панель управления</button>
+                <button onclick="switchTab('tab-components')" id="btn-components" class="tab-btn px-4 py-2 rounded-md text-sm">Анализ компонентов</button>
+                <button onclick="switchTab('tab-suppliers')" id="btn-suppliers" class="tab-btn px-4 py-2 rounded-md text-sm">Поставщики</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ================= TAB 1: OVERVIEW ================= -->
+    <div id="tab-overview" class="tab-content active">
+        <!-- GLOBAL KPIs -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="glass-panel p-5">
+                <div class="text-xs text-slate-500 font-semibold mb-1">ПРОДАЖИ ГП В ДЕНЬ (БЕЗ УЧЕТА РОСТА)</div>
+                <div class="text-3xl font-bold text-white number-font">500 <span class="text-sm font-normal text-slate-500">шт.</span></div>
+            </div>
+            <div class="glass-panel p-5">
+                <div class="text-xs text-slate-500 font-semibold mb-1">ГОТОВАЯ ПРОДУКЦИЯ</div>
+                <div class="text-3xl font-bold text-white number-font">30 000 <span class="text-sm font-normal text-slate-500">шт.</span></div>
+                <div class="text-xs text-emerald-400 mt-1">Покрытие 60 дней (без учета роста продаж)</div>
+            </div>
+            <div class="glass-panel p-5">
+                <div class="text-xs text-slate-500 font-semibold mb-1">ПРОГНОЗ НА 90 ДНЕЙ (С УЧЕТОМ РОСТА)</div>
+                <div class="text-3xl font-bold text-white number-font">52 962 <span class="text-sm font-normal text-slate-500">шт.</span></div>
+            </div>
+            <div class="glass-panel p-5 border-b-2 border-b-amber-500">
+                <div class="text-xs text-slate-500 font-semibold mb-1">ТРЕБУЮТ ДЕЙСТВИЙ (СЫРЬЁ)</div>
+                <div class="text-3xl font-bold text-amber-400 number-font">2 <span class="text-sm font-normal text-slate-500">из 5</span></div>
+                <div class="text-xs text-sky-400 mt-1 font-semibold">TAED просрочен, ПАВ — заказ в течение 7 дней ↓</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- MAIN CHART -->
+            <div class="lg:col-span-2 glass-panel p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Запасы сырья в дн. (Без учета остатков ГП) и срок доставки</h2>
+                        <p class="text-sm text-slate-400">Сравнение чистого запаса сырья на складе и Lead Time (LT)</p>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="overviewChart"></canvas>
+                </div>
+            </div>
+
+            <!-- RISK MATRIX -->
+            <div class="glass-panel p-6">
+                <h2 class="text-xl font-bold text-white mb-2">Оценка рисков</h2>
+                <p class="text-sm text-slate-400 mb-6">Приоритет действий с учетом запаса готовой продукции (60 дней)</p>
+                <div class="space-y-4">
+                    <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="font-bold text-lg">TAED</span>
+                            <span class="px-2 py-1 bg-amber-500 text-white text-[10px] font-bold rounded uppercase">Срочный заказ</span>
+                        </div>
+                        <p class="text-sm text-slate-300">Дата заказа: <span class="text-amber-400 font-bold">22.08.2026 (Просрочен на 2 дн.)</span></p>
+                        <p class="text-xs text-amber-400 mt-2 flex items-center gap-1">➔ Заказ требовался не позднее 22.08. Разместить СЕГОДНЯ (24.08.2026)!</p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="font-bold text-lg">ПАВ</span>
+                            <span class="px-2 py-1 bg-amber-500 text-white text-[10px] font-bold rounded uppercase">Ближайший заказ</span>
+                        </div>
+                        <p class="text-sm text-slate-300">Дата заказа: <span class="text-white font-bold">31.08.2026</span> | OOS: <span class="text-white font-bold">08.11.2026</span></p>
+                        <p class="text-xs text-amber-400 mt-2 flex items-center gap-1">➔ Оставшийся срок сырья 16 дней. Разместить заказ в течение 7 дней.</p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="font-bold text-lg">Перкарбонат</span>
+                            <span class="px-2 py-1 bg-sky-500 text-white text-[10px] font-bold rounded uppercase">Плановый заказ</span>
+                        </div>
+                        <p class="text-sm text-slate-400">Дата заказа: 09.09.2026 | Критическая дата OOS: 12.11.2026</p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="font-bold text-lg">Сода</span>
+                            <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded uppercase">Штатно</span>
+                        </div>
+                        <p class="text-sm text-slate-400">Дата заказа: 18.10.2026 | Критическая дата OOS: 22.11.2026</p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="font-bold text-lg">Дойпак</span>
+                            <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded uppercase">Штатно</span>
+                        </div>
+                        <p class="text-sm text-slate-400">Дата заказа: 14.10.2026 | Критическая дата OOS: 12.12.2026</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= TAB 2: COMPONENTS ================= -->
+    <div id="tab-components" class="tab-content">
+        <div class="glass-panel p-6 mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+                <h2 class="text-xl font-bold text-white">Детализация компонента</h2>
+                <p class="text-sm text-slate-400">Выберите сырье для глубокого анализа</p>
+            </div>
+            <select id="componentSelect" onchange="updateComponentView()" class="bg-slate-900 border border-slate-700 text-white text-lg rounded-lg px-6 py-3 focus:outline-none focus:border-sky-500 shadow-inner">
+                <option value="0">Перкарбонат натрия</option>
+                <option value="1">TAED</option>
+                <option value="2">Сода</option>
+                <option value="3">ПАВ</option>
+                <option value="4">Дойпак</option>
+            </select>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+            <!-- DYNAMIC KPI CARDS -->
+            <div class="glass-panel p-5 flex flex-col justify-center">
+                <div class="text-xs text-slate-500 font-semibold mb-2 uppercase">Статус компонента</div>
+                <div id="dyn-name" class="text-xl font-bold text-white mb-1">Перкарбонат</div>
+                <div id="dyn-status" class="text-base font-bold text-orange-400">Внимание</div>
+            </div>
+            <div class="glass-panel p-5">
+                <div class="text-xs text-slate-500 font-semibold mb-2 uppercase">Текущий запас</div>
+                <div class="text-3xl font-bold text-white number-font" id="dyn-coverage">20</div>
+                <div class="text-xs text-slate-400 mt-1">дней покрытия сырья</div>
+            </div>
+            <div class="glass-panel p-5 border-l-2 border-l-emerald-500">
+                <div class="text-xs text-slate-500 font-semibold mb-2 uppercase">Запас ГП</div>
+                <div class="text-3xl font-bold text-emerald-400 number-font">60</div>
+                <div class="text-xs text-slate-400 mt-1">дней покрытия ГП</div>
+            </div>
+            <div class="glass-panel p-5">
+                <div class="text-xs text-slate-500 font-semibold mb-2 uppercase">Lead time + страховой запас дн.</div>
+                <div class="text-3xl font-bold text-white number-font" id="dyn-lt">64</div>
+                <div class="text-xs text-slate-400 mt-1">дней</div>
+            </div>
+            <div class="glass-panel p-5 bg-sky-900/20 border-sky-900/50">
+                <div class="text-xs text-sky-400 font-semibold mb-2 uppercase">Рекомендуемый заказ</div>
+                <div class="text-3xl font-bold text-white number-font" id="dyn-purchase">30 000</div>
+                <div class="text-xs text-slate-400 mt-1">кг / шт</div>
+            </div>
+            <!-- ОКНО: КРИТИЧЕСКАЯ ХРОНОЛОГИЯ -->
+            <div class="glass-panel p-5 bg-indigo-900/20 border-indigo-500/40">
+                <div class="text-xs text-indigo-400 font-semibold mb-2 uppercase">Критическая хронология</div>
+                <div class="text-xs text-slate-300">Дата заказа (не позднее): <b id="dyn-order-date" class="text-white block text-sm">--.--.----</b></div>
+                <div class="text-xs text-slate-300 mt-2">Критическая дата OOS: <b id="dyn-oos-date" class="text-white block text-sm">--.--.----</b></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="glass-panel p-6">
+                <h3 class="text-lg font-bold mb-4">Сравнение запасов</h3>
+                <div class="chart-container">
+                    <canvas id="componentBarChart"></canvas>
+                </div>
+                <div id="dyn-conclusions" class="mt-4 p-4 rounded-lg bg-slate-900/80 border border-slate-700 text-sm leading-relaxed text-slate-300">
+                    <!-- Выводы обновляются динамически из JS -->
+                </div>
+            </div>
+            <div class="glass-panel p-6">
+                <h3 class="text-lg font-bold mb-4">Прогноз потребности (90 дней)</h3>
+                <div class="chart-container">
+                    <canvas id="forecastChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= TAB 3: SUPPLIERS ================= -->
+    <div id="tab-suppliers" class="tab-content">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div class="lg:col-span-2 glass-panel p-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Матрица поставщиков (на примере ПАВ)</h2>
+                        <p class="text-sm text-slate-400">Сравнение условий закупки партии 12 000 кг</p>
+                    </div>
+
+                    <!-- ПЕРЕКЛЮЧАТЕЛИ РЕЖИМОВ МАТРИЦЫ -->
+                    <div class="flex items-center gap-2 bg-slate-900/90 border border-slate-700 p-1.5 rounded-lg">
+                        <label class="flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer hover:bg-slate-800 transition text-xs font-semibold text-slate-300">
+                            <input type="radio" name="matrixMode" value="base" checked onchange="switchSupplierMatrix()" class="accent-sky-400 cursor-pointer">
+                            <span>Матрица поставщиков</span>
+                        </label>
+                        <label class="flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer hover:bg-slate-800 transition text-xs font-semibold text-slate-300">
+                            <input type="radio" name="matrixMode" value="extended" onchange="switchSupplierMatrix()" class="accent-sky-400 cursor-pointer">
+                            <span>Развернутая матрица + оценки</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- ОКНО 1: ПЕРВОНАЧАЛЬНАЯ МАТРИЦА ПОСТАВЩИКОВ -->
+                <div id="supplier-matrix-base" class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-700 text-sm text-slate-400">
+                                <th class="pb-3 font-medium">Параметр</th>
+                                <th class="pb-3 font-medium text-center">Поставщик A</th>
+                                <th class="pb-3 font-medium text-center">Поставщик B</th>
+                                <th class="pb-3 font-medium text-center">Поставщик C</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition">
+                                <td class="py-3 font-semibold text-slate-300">Цена, ₽/кг</td>
+                                <td class="py-3 text-center font-bold text-white">178</td>
+                                <td class="py-3 text-center text-emerald-400 font-bold">171 <span class="text-[10px] bg-emerald-500/20 px-1 rounded ml-1">MIN</span></td>
+                                <td class="py-3 text-center font-bold text-white">183</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition">
+                                <td class="py-3 font-semibold text-slate-300">Минимальная партия, кг</td>
+                                <td class="py-3 text-center">5 000</td>
+                                <td class="py-3 text-center">12 000</td>
+                                <td class="py-3 text-center text-emerald-400">3 000</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition">
+                                <td class="py-3 font-semibold text-slate-300">Оплата</td>
+                                <td class="py-3 text-center text-sky-400">30 дней отсрочка</td>
+                                <td class="py-3 text-center text-red-400">100% предоплата</td>
+                                <td class="py-3 text-center">50% / 50% через 30 дней</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition">
+                                <td class="py-3 font-semibold text-slate-300">Lead time, дней</td>
+                                <td class="py-3 text-center">18</td>
+                                <td class="py-3 text-center text-red-400">32</td>
+                                <td class="py-3 text-center text-emerald-400 font-bold">12 <span class="text-[10px] bg-emerald-500/20 px-1 rounded ml-1">FAST</span></td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition">
+                                <td class="py-3 font-semibold text-slate-300">OTIF за 6 мес.</td>
+                                <td class="py-3 text-center">96,0%</td>
+                                <td class="py-3 text-center text-red-400">84,0%</td>
+                                <td class="py-3 text-center text-emerald-400">98,0%</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition">
+                                <td class="py-3 font-semibold text-slate-300">Рекламации за 6 мес.</td>
+                                <td class="py-3 text-center">1,0%</td>
+                                <td class="py-3 text-center text-red-400">4,0%</td>
+                                <td class="py-3 text-center text-emerald-400">0,5%</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition">
+                                <td class="py-3 font-semibold text-slate-300">Доставка</td>
+                                <td class="py-3 text-center text-emerald-400">включена</td>
+                                <td class="py-3 text-center text-red-400">+ 24 000 ₽</td>
+                                <td class="py-3 text-center text-emerald-400">включена</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition">
+                                <td class="py-3 font-semibold text-slate-300">Фиксация цены</td>
+                                <td class="py-3 text-center">30 дней</td>
+                                <td class="py-3 text-center">на партию</td>
+                                <td class="py-3 text-center text-emerald-400">60 дней</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ОКНО 2: РАЗВЕРНУТАЯ МАТРИЦА + ОЦЕНКИ -->
+                <div id="supplier-matrix-extended" class="overflow-x-auto hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-700 text-sm text-slate-400">
+                                <th class="pb-3 font-medium">Параметр</th>
+                                <th class="pb-3 font-medium text-center">Поставщик A</th>
+                                <th class="pb-3 font-medium text-center">Поставщик B</th>
+                                <th class="pb-3 font-medium text-center">Поставщик C</th>
+                                <th class="pb-3 font-medium text-center">Вес критерия</th>
+                                <th class="pb-3 font-medium text-center">Оценка A</th>
+                                <th class="pb-3 font-medium text-center">Оценка B</th>
+                                <th class="pb-3 font-medium text-center">Оценка C</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition">
+                                <td class="py-3 font-semibold text-slate-300">Цена, ₽/кг</td>
+                                <td class="py-3 text-center font-bold text-white">178</td>
+                                <td class="py-3 text-center text-emerald-400 font-bold">171 <span class="text-[10px] bg-emerald-500/20 px-1 rounded ml-1">MIN</span></td>
+                                <td class="py-3 text-center font-bold text-white">183</td>
+                                <td class="py-3 text-center text-sky-400">25%</td>
+                                <td class="py-3 text-center">4</td>
+                                <td class="py-3 text-center text-emerald-400 font-bold">5</td>
+                                <td class="py-3 text-center">3</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition">
+                                <td class="py-3 font-semibold text-slate-300">Минимальная партия, кг</td>
+                                <td class="py-3 text-center">5 000</td>
+                                <td class="py-3 text-center">12 000</td>
+                                <td class="py-3 text-center text-emerald-400">3 000</td>
+                                <td class="py-3 text-center text-sky-400">5%</td>
+                                <td class="py-3 text-center text-emerald-400 font-bold">5</td>
+                                <td class="py-3 text-center text-red-400">1</td>
+                                <td class="py-3 text-center text-emerald-400 font-bold">5</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition">
+                                <td class="py-3 font-semibold text-slate-300">Оплата</td>
+                                <td class="py-3 text-center text-sky-400">30 дней отсрочка</td>
+                                <td class="py-3 text-center text-red-400">100% предоплата</td>
+                                <td class="py-3 text-center">50% / 50% через 30 дней</td>
+                                <td class="py-3 text-center text-sky-400">20%</td>
+                                <td class="py-3 text-center text-emerald-400 font-bold">5</td>
+                                <td class="py-3 text-center text-red-400">1</td>
+                                <td class="py-3 text-center">3</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition">
+                                <td class="py-3 font-semibold text-slate-300">Lead time, дней</td>
+                                <td class="py-3 text-center">18</td>
+                                <td class="py-3 text-center text-red-400">32</td>
+                                <td class="py-3 text-center text-emerald-400 font-bold">12 <span class="text-[10px] bg-emerald-500/20 px-1 rounded ml-1">FAST</span></td>
+                                <td class="py-3 text-center text-sky-400">15%</td>
+                                <td class="py-3 text-center">4</td>
+                                <td class="py-3 text-center text-red-400">2</td>
+                                <td class="py-3 text-center text-emerald-400 font-bold">5</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition">
+                                <td class="py-3 font-semibold text-slate-300">OTIF за 6 мес.</td>
+                                <td class="py-3 text-center">96,0%</td>
+                                <td class="py-3 text-center text-red-400">84,0%</td>
+                                <td class="py-3 text-center text-emerald-400">98,0%</td>
+                                <td class="py-3 text-center text-sky-400">15%</td>
+                                <td class="py-3 text-center">4</td>
+                                <td class="py-3 text-center text-red-400">2</td>
+                                <td class="py-3 text-center text-emerald-400 font-bold">5</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition">
+                                <td class="py-3 font-semibold text-slate-300">Рекламации за 6 мес.</td>
+                                <td class="py-3 text-center">1,0%</td>
+                                <td class="py-3 text-center text-red-400">4,0%</td>
+                                <td class="py-3 text-center text-emerald-400">0,5%</td>
+                                <td class="py-3 text-center text-sky-400">10%</td>
+                                <td class="py-3 text-center">3</td>
+                                <td class="py-3 text-center text-red-400">1</td>
+                                <td class="py-3 text-center text-emerald-400 font-bold">5</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition">
+                                <td class="py-3 font-semibold text-slate-300">Доставка</td>
+                                <td class="py-3 text-center text-emerald-400">включена</td>
+                                <td class="py-3 text-center text-red-400">+ 24 000 ₽</td>
+                                <td class="py-3 text-center text-emerald-400">включена</td>
+                                <td class="py-3 text-center text-sky-400">5%</td>
+                                <td class="py-3 text-center text-emerald-400 font-bold">5</td>
+                                <td class="py-3 text-center text-red-400">2</td>
+                                <td class="py-3 text-center text-emerald-400 font-bold">5</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition">
+                                <td class="py-3 font-semibold text-slate-300">Фиксация цены</td>
+                                <td class="py-3 text-center">30 дней</td>
+                                <td class="py-3 text-center">на партию</td>
+                                <td class="py-3 text-center text-emerald-400">60 дней</td>
+                                <td class="py-3 text-center text-sky-400">5%</td>
+                                <td class="py-3 text-center">3</td>
+                                <td class="py-3 text-center text-emerald-400 font-bold">5</td>
+                                <td class="py-3 text-center text-emerald-400 font-bold">5</td>
+                            </tr>
+                            <tr class="bg-slate-900/50 border-t-2 border-slate-700">
+                                <td class="py-4 font-bold text-white">Взвешенный балл (Итоговая оценка)</td>
+                                <td class="py-4 text-center text-xl font-black text-sky-400" colspan="3">--</td>
+                                <td class="py-4 text-center font-bold text-sky-400">100%</td>
+                                <td class="py-4 text-center text-xl font-black text-sky-400">4,15</td>
+                                <td class="py-4 text-center text-xl font-black text-slate-500">2,55</td>
+                                <td class="py-4 text-center text-xl font-black text-white">4,10</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+            <div class="glass-panel p-6 flex flex-col justify-between border-orange-500/30 border-2">
+                <div>
+                    <h3 class="text-lg font-bold text-orange-400 mb-2">Стресс-сценарий</h3>
+                    <p class="text-sm text-slate-300 mb-4">
+                        Текущий запас ПАВ упал до <b>14 дней</b>. Кто сможет обеспечить поставку до остановки производства?
+                    </p>
+                    <div class="space-y-3 mt-4">
+                        <div class="flex justify-between items-center p-3 bg-slate-900 rounded-lg">
+                            <span class="text-sm">Поставщик A (LT 18)</span>
+                            <span class="text-xs font-bold text-red-400 px-2 py-1 bg-red-400/10 rounded">ДЕФИЦИТ 4 ДНЯ</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-slate-900 rounded-lg opacity-50">
+                            <span class="text-sm">Поставщик B (LT 32)</span>
+                            <span class="text-xs font-bold text-red-500">НЕ ПРОХОДИТ</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-slate-900 rounded-lg ring-1 ring-emerald-500">
+                            <span class="text-sm font-bold text-white">Поставщик C (LT 12)</span>
+                            <span class="text-xs font-bold text-emerald-400 px-2 py-1 bg-emerald-400/10 rounded">СПАСАЕТ</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 pt-4 border-t border-slate-700">
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Вывод: Несмотря на то, что Поставщик A имеет высший балл и лучшую отсрочку, в условиях горящего запаса единственный вариант — <b>Поставщик C</b>.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-panel p-6">
+            <h3 class="text-lg font-bold mb-4">Визуализация: Взвешенный балл vs Lead Time</h3>
+            <div class="chart-container" style="height: 250px;">
+                <canvas id="supplierChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // GLOBAL DATA BASE (Дата расчета: 24.08.2026)
+    const fgCoverage = 60;
+    
+    const db = [
+        { name: "Перкарбонат", coverage: 20, lead: 64, safety: 14, purchase: "30 000", orderDate: "09.09.2026", oosDate: "12.11.2026", daysPast: 0 },
+        { name: "TAED", coverage: 24, lead: 86, safety: 21, purchase: "2 500", orderDate: "22.08.2026", oosDate: "16.11.2026", daysPast: 2 },
+        { name: "Сода", coverage: 30, lead: 35, safety: 10, purchase: "8 000", orderDate: "18.10.2026", oosDate: "22.11.2026", daysPast: 0 },
+        { name: "ПАВ", coverage: 16, lead: 69, safety: 14, purchase: "7 000", orderDate: "31.08.2026", oosDate: "08.11.2026", daysPast: 0 },
+        { name: "Дойпак", coverage: 50, lead: 59, safety: 14, purchase: "30 000", orderDate: "14.10.2026", oosDate: "12.12.2026", daysPast: 0 }
+    ];
+
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.font.family = 'Inter';
+
+    // 1. OVERVIEW CHART
+    const ctxOverview = document.getElementById('overviewChart').getContext('2d');
+    new Chart(ctxOverview, {
+        type: 'bar',
+        data: {
+            labels: db.map(i => i.name),
+            datasets: [
+                {
+                    label: 'Запас сырья (дней)',
+                    data: db.map(i => i.coverage),
+                    backgroundColor: '#38bdf8',
+                    borderRadius: 6
+                },
+                {
+                    label: 'Lead time + страховой запас дн.',
+                    data: db.map(i => i.lead),
+                    backgroundColor: '#1e293b',
+                    borderColor: '#475569',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y: { grid: { color: 'rgba(51, 65, 85, 0.4)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // 2. COMPONENT CHARTS
+    let compBarChart;
+    function initComponentChart(index) {
+        const item = db[index];
+        const ctx = document.getElementById('componentBarChart').getContext('2d');
+        
+        if (compBarChart) compBarChart.destroy();
+        
+        compBarChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Запас сырья', 'Запас ГП', 'Lead time + страховой запас дн.'],
+                datasets: [{
+                    label: 'Дни',
+                    data: [item.coverage, fgCoverage, item.lead],
+                    backgroundColor: [
+                        item.coverage < item.lead ? '#f87171' : '#38bdf8', 
+                        '#34d399',
+                        '#64748b'
+                    ],
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, grid: { color: 'rgba(51, 65, 85, 0.4)' } }, x: { grid: { display: false } } }
+            }
+        });
+    }
+
+    // Forecast Line Chart
+    const ctxForecast = document.getElementById('forecastChart').getContext('2d');
+    new Chart(ctxForecast, {
+        type: 'line',
+        data: {
+            labels: ['Месяц 1', 'Месяц 2', 'Месяц 3'],
+            datasets: [{
+                label: 'Потребность в продажах',
+                data: [16800, 17640, 18522],
+                borderColor: '#a78bfa',
+                backgroundColor: 'rgba(167, 139, 250, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { grid: { color: 'rgba(51, 65, 85, 0.4)' } }, x: { grid: { display: false } } }
+        }
+    });
+
+    // 3. SUPPLIER CHART
+    const ctxSupplier = document.getElementById('supplierChart').getContext('2d');
+    new Chart(ctxSupplier, {
+        type: 'bar',
+        data: {
+            labels: ['Поставщик A', 'Поставщик B', 'Поставщик C'],
+            datasets: [
+                {
+                    label: 'Взвешенный балл (из 5)',
+                    data: [4.15, 2.55, 4.10],
+                    backgroundColor: '#38bdf8',
+                    borderRadius: 4,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Lead Time (дней)',
+                    data: [18, 32, 12],
+                    backgroundColor: '#f43f5e',
+                    borderRadius: 4,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { type: 'linear', position: 'left', max: 5, grid: { color: 'rgba(51, 65, 85, 0.2)' } },
+                y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // LOGIC FUNCTIONS
+    function switchSupplierMatrix() {
+        const mode = document.querySelector('input[name="matrixMode"]:checked').value;
+        const baseMatrix = document.getElementById('supplier-matrix-base');
+        const extendedMatrix = document.getElementById('supplier-matrix-extended');
+
+        if (mode === 'base') {
+            baseMatrix.classList.remove('hidden');
+            extendedMatrix.classList.add('hidden');
+        } else {
+            baseMatrix.classList.add('hidden');
+            extendedMatrix.classList.remove('hidden');
+        }
+    }
+
+    function updateComponentView() {
+        const val = document.getElementById('componentSelect').value;
+        const item = db[val];
+        
+        document.getElementById('dyn-name').innerText = item.name;
+        document.getElementById('dyn-coverage').innerText = item.coverage;
+        document.getElementById('dyn-lt').innerText = item.lead;
+        document.getElementById('dyn-purchase').innerText = item.purchase;
+        
+        const orderDateEl = document.getElementById('dyn-order-date');
+        orderDateEl.innerText = item.orderDate;
+        
+        if (item.daysPast > 0) {
+            orderDateEl.className = "text-amber-400 block text-sm font-bold";
+            orderDateEl.innerText += ` (Просрочен на ${item.daysPast} дн.!)`;
+        } else {
+            orderDateEl.className = "text-white block text-sm font-bold";
+        }
+
+        document.getElementById('dyn-oos-date').innerText = item.oosDate;
+        
+        const statusEl = document.getElementById('dyn-status');
+        const concEl = document.getElementById('dyn-conclusions');
+        
+        if (item.daysPast > 0) {
+            statusEl.innerText = "СРОЧНЫЙ ЗАКАЗ";
+            statusEl.className = "text-base font-bold text-amber-400 uppercase";
+            
+            concEl.innerHTML = `⚠️ <b class="text-amber-400">Внимание:</b> Крайний срок размещения заказа (${item.orderDate}) прошел ${item.daysPast} дн. назад relative к базовой дате 24.08.2026.<br>🛡️ <b class="text-emerald-400">Критическая дата OOS:</b> Выход в OOS по продажам произойдет <b>${item.oosDate}</b>. Заказ необходимо разместить немедленно!`;
+        } else if (item.coverage < item.lead) {
+            statusEl.innerText = "ВНИМАНИЕ / ЗАКАЗ СКОРО";
+            statusEl.className = "text-base font-bold text-sky-400 uppercase";
+            
+            concEl.innerHTML = `📦 <b class="text-sky-400">Параметры заказа:</b> Дата заказа не позднее <b>${item.orderDate}</b>.<br>🛡️ <b class="text-emerald-400">Критическая дата OOS:</b> При соблюдении графика выхода в OOS по продажам не произойдет раньше <b>${item.oosDate}</b>.`;
+        } else {
+            statusEl.innerText = "БЕСПЕРЕБОЙНО";
+            statusEl.className = "text-base font-bold text-emerald-400 uppercase";
+            
+            concEl.innerHTML = `✅ <b class="text-emerald-400">Штатный режим:</b> Заказ размещается не позднее <b>${item.orderDate}</b>. Критическая дата OOS — <b>${item.oosDate}</b>.`;
+        }
+        
+        initComponentChart(val);
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById(tabId).classList.add('active');
+        document.getElementById('btn-' + tabId.split('-')[1]).classList.add('active');
+        
+        if(tabId === 'tab-components') updateComponentView();
+    }
+
+    // Init first view
+    updateComponentView();
+</script>
+</body>
+</html>
